@@ -12,43 +12,54 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
-  updateProfile, setPersistence, browserLocalPersistence, browserSessionPersistence
-  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-  deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch }
-  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { getMessaging, getToken, onMessage }
-  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
-
-const firebaseConfig = window.FIREBASE_CONFIG || {
+<!-- Firebase CDN (compat — works on all mobile browsers) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
   apiKey: "AIzaSyDvNpoKxOu4C0nWCCn3Cj2pNWesSIwsXaU",
   authDomain: "kasa-app-fb855.firebaseapp.com",
   projectId: "kasa-app-fb855",
   storageBucket: "kasa-app-fb855.firebasestorage.app",
   messagingSenderId: "987268160319",
-  appId: "1:987268160319:web:90480c93a1cfb645c9d18a",
-  vapidKey: ""
+  appId: "1:987268160319:web:90480c93a1cfb645c9d18a"
+});
+
+const _auth = firebase.auth();
+const _db   = firebase.firestore();
+
+window._fb = {
+  auth: _auth,
+  db:   _db,
+  signInWithEmailAndPassword:    (auth, e, p) => auth.signInWithEmailAndPassword(e, p),
+  createUserWithEmailAndPassword:(auth, e, p) => auth.createUserWithEmailAndPassword(e, p),
+  signOut:                       (auth)       => auth.signOut(),
+  onAuthStateChanged:            (auth, cb)   => auth.onAuthStateChanged(cb),
+  sendPasswordResetEmail:        (auth, e)    => auth.sendPasswordResetEmail(e),
+  updateProfile:                 (user, data) => user.updateProfile(data),
+  setPersistence:                (auth, p)    => auth.setPersistence(p),
+  browserLocalPersistence:       firebase.auth.Auth.Persistence.LOCAL,
+  browserSessionPersistence:     firebase.auth.Auth.Persistence.SESSION,
+  collection: (db, col)         => db.collection(col),
+  doc:        (db, col, id)     => db.collection(col).doc(id),
+  addDoc:     (ref, data)       => ref.add(data),
+  setDoc:     (ref, data)       => ref.set(data),
+  getDoc:     (ref)             => ref.get(),
+  getDocs:    (q)               => q.get(),
+  deleteDoc:  (ref)             => ref.delete(),
+  updateDoc:  (ref, data)       => ref.update(data),
+  query:      (ref, ...fns)     => { let q = ref; fns.forEach(fn => { q = fn(q); }); return q; },
+  where:      (f, op, v)        => (q => q.where(f, op, v)),
+  orderBy:    (f, dir)          => (q => q.orderBy(f, dir || 'asc')),
+  onSnapshot: (q, cb, errCb)    => q.onSnapshot(cb, errCb),
+  serverTimestamp: ()           => firebase.firestore.FieldValue.serverTimestamp(),
+  writeBatch: (db)              => db.batch(),
+  getToken:   ()                => Promise.resolve(null),
+  onMessage:  ()                => {},
+  messaging:  null,
 };
-
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-let messaging = null;
-try { messaging = getMessaging(app); } catch(e) {}
-
-window._fb = { auth, db, messaging,
-  signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile,
-  setPersistence, browserLocalPersistence, browserSessionPersistence,
-  collection, doc, addDoc, setDoc, getDoc, getDocs, deleteDoc, updateDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp, writeBatch, getToken, onMessage };
 window._fbReady = true;
-// Fire after a tick so deferred app.js has registered its listeners
 setTimeout(() => document.dispatchEvent(new Event('fb-ready')), 10);
 </script>
 
