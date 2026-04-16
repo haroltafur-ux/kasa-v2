@@ -101,12 +101,10 @@ let unsubExpenses = null;
 
 // ── FIREBASE WAIT ────────────────────────────────────────────────
 function waitFB(cb) {
-  // Guard: only call cb once
   let called = false;
   function once() { if (!called) { called = true; cb(); } }
   if (window._fbReady && window._fb) { once(); return; }
   document.addEventListener('fb-ready', once, { once: true });
-  // Polling fallback for mobile where the event may have been missed
   const poll = setInterval(() => {
     if (window._fbReady && window._fb) { clearInterval(poll); once(); }
   }, 50);
@@ -115,15 +113,15 @@ function waitFB(cb) {
 
 let authResolved = false;
 
-waitFB(() => {
-  const { auth, onAuthStateChanged } = window._fb;
-  onAuthStateChanged(auth, async u => {
-    if (authResolved) return; // only handle first call
-    authResolved = true;
-    if (u) { user = u; await afterLogin(); }
-    else    { user = null; S('s-auth'); }
-  });
-});
+// Always advance past splash after 2.5s
+setTimeout(() => {
+  if (!authResolved) S('s-onboard');
+}, 2500);
+
+// If Firebase never responds in 6s, go straight to auth
+setTimeout(() => {
+  if (!authResolved) { authResolved = true; S('s-auth'); }
+}, 6000);
 
 // ── SCREEN TRANSITIONS ───────────────────────────────────────────
 function S(id) {
@@ -132,10 +130,15 @@ function S(id) {
   if (el) requestAnimationFrame(() => el.classList.add('up'));
 }
 
-// Fallback: if Firebase never responds in 5s, go to auth screen
-setTimeout(() => {
-  if (!authResolved) { authResolved = true; S('s-auth'); }
-}, 5000);
+waitFB(() => {
+  const { auth, onAuthStateChanged } = window._fb;
+  onAuthStateChanged(auth, async u => {
+    if (authResolved) return;
+    authResolved = true;
+    if (u) { user = u; await afterLogin(); }
+    else    { user = null; S('s-auth'); }
+  });
+});
 
 // ── AUTH ─────────────────────────────────────────────────────────
 let authModeVal = 'login';
