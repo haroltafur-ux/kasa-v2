@@ -357,17 +357,14 @@ function listenExpenses() {
   if (!user) return;
   if (unsubExpenses) unsubExpenses();
   const { db, collection, query, where, onSnapshot } = window._fb;
-  // NOTE: No orderBy here — avoids needing a composite index in Firestore.
-  // We sort client-side instead (see the .sort below).
   const q = query(
     collection(db,'expenses'),
     where('uid','==',user.uid)
   );
   unsubExpenses = onSnapshot(q, snap => {
     expenses = snap.docs
-      .map(d => ({id:d.id,...d.data()}))
+      .map(d => ({id: d.id, ...d.data()}))
       .sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
-    // Also persist locally as backup
     try { localStorage.setItem('kasa_exp_' + user.uid, JSON.stringify(expenses)); } catch(e){}
     renderAll();
   }, err => {
