@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kasa">
+<link rel="manifest" href="manifest.json">
+<title>Kasa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
+  updateProfile, setPersistence, browserLocalPersistence, browserSessionPersistence
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
+  deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getMessaging, getToken, onMessage }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
+
+const firebaseConfig = window.FIREBASE_CONFIG || {
+  apiKey: "AIzaSyDvNpoKxOu4C0nWCCn3Cj2pNWesSIwsXaU",
+  authDomain: "kasa-app-fb855.firebaseapp.com",
+  projectId: "kasa-app-fb855",
+  storageBucket: "kasa-app-fb855.firebasestorage.app",
+  messagingSenderId: "987268160319",
+  appId: "1:987268160319:web:90480c93a1cfb645c9d18a",
+  vapidKey: ""
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+let messaging = null;
+try { messaging = getMessaging(app); } catch(e) {}
+
+window._fb = { auth, db, messaging,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile,
+  setPersistence, browserLocalPersistence, browserSessionPersistence,
+  collection, doc, addDoc, setDoc, getDoc, getDocs, deleteDoc, updateDoc,
+  query, where, orderBy, onSnapshot, serverTimestamp, writeBatch, getToken, onMessage };
+window._fbReady = true;
+// Fire after a tick so deferred app.js has registered its listeners
+setTimeout(() => document.dispatchEvent(new Event('fb-ready')), 10);
+</script>
+
+<style>
+/* ═══════════════════════════════════════════
+   KASA — Design System v3
+   Dark editorial · Syne + Outfit
+═══════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#09090b; --s1:#111113; --s2:#18181b; --s3:#212124; --s4:#28282c; --s5:#303035;
+  --b1:rgba(255,255,255,.06); --b2:rgba(255,255,255,.1); --b3:rgba(255,255,255,.16);
+  --t1:#f2efe9; --t2:#8c8984; --t3:#504e4a; --t4:#282624;
+  --gold:#e9bc5a; --gold2:#d4a73e; --goldbg:rgba(233,188,90,.09); --goldglow:rgba(233,188,90,.18);
+  --red:#e85555;   --redbg:rgba(232,85,85,.09);   --redline:rgba(232,85,85,.25);
+  --green:#52c98a; --greenbg:rgba(82,201,138,.09); --greenline:rgba(82,201,138,.25);
+  --blue:#5a9cf5;  --bluebg:rgba(90,156,245,.09);  --blueline:rgba(90,156,245,.25);
+  --purple:#a78cf8;--purplebg:rgba(167,140,248,.09);
+  --orange:#f89c55;--pink:#f47db8;--teal:#3dd6c0;
+  --r:16px; --r2:12px; --r3:24px; --r4:100px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --f:'Outfit',sans-serif; --fd:'Syne',sans-serif;
+}
+/* ── LIGHT THEME ── */
+.light{
+  --bg:#f5f4f0; --s1:#eeede9; --s2:#e8e7e3; --s3:#deded9; --s4:#d4d3ce; --s5:#cac9c4;
+  --b1:rgba(0,0,0,.07); --b2:rgba(0,0,0,.11); --b3:rgba(0,0,0,.16);
+  --t1:#1a1814; --t2:#5c5a55; --t3:#9c9a95; --t4:#d0cfc9;
+  --goldbg:rgba(180,130,20,.1); --goldglow:rgba(180,130,20,.2);
+  --redbg:rgba(200,50,50,.08); --greenbg:rgba(40,160,90,.08); --bluebg:rgba(50,110,220,.08); --purplebg:rgba(120,90,220,.08);
+}
+html{height:100%;background:var(--bg);overflow:hidden}
+body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--f);font-size:15px;
+  overflow:hidden;position:fixed;width:100%;padding-top:var(--sat);
+  -webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{display:none}
+
+/* ── SCREENS ── */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;
+  transform:translateY(100%);opacity:0;pointer-events:none;background:var(--bg)}
+.screen.up{transform:translateY(0);opacity:1;pointer-events:all}
+
+/* ── SPLASH ── */
+#s-splash{align-items:center;justify-content:center}
+.splash-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(233,188,90,.11),transparent 68%);
+  animation:breathe 3.5s ease-in-out infinite;pointer-events:none}
+@keyframes breathe{0%,100%{opacity:.7;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.07)}}
+.splash-logo{display:flex;flex-direction:column;align-items:center;
+  animation:fadeUp .8s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.logo-ring{width:90px;height:90px;border-radius:28px;
+  background:linear-gradient(145deg,rgba(233,188,90,.1),rgba(233,188,90,.03));
+  border:1px solid rgba(233,188,90,.2);display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;position:relative;overflow:hidden}
+.logo-ring::after{content:'';position:absolute;inset:0;
+  background:conic-gradient(transparent,rgba(233,188,90,.06) 60deg,transparent 120deg);
+  animation:ringRotate 8s linear infinite}
+@keyframes ringRotate{to{transform:rotate(360deg)}}
+.logo-k{font-family:var(--fd);font-size:44px;font-weight:800;color:var(--gold);position:relative;z-index:1}
+.splash-name{font-family:var(--fd);font-size:40px;font-weight:800;letter-spacing:-2px;margin-bottom:8px}
+.splash-tag{font-size:15px;color:var(--t2);text-align:center;max-width:220px;line-height:1.5}
+.splash-dots{display:flex;gap:7px;margin-top:40px}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--gold);opacity:.25;
+  animation:sdot 1.4s ease-in-out infinite}
+.sdot:nth-child(2){animation-delay:.2s}.sdot:nth-child(3){animation-delay:.4s}
+@keyframes sdot{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:1;transform:scale(1.35)}}
+
+/* ── ONBOARD ── */
+#s-onboard{justify-content:flex-end}
+.ob-bg{position:absolute;inset:0;overflow:hidden}
+.ob-grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:38px 38px;
+  mask-image:radial-gradient(ellipse at 50% 30%,black 0%,transparent 68%)}
+.ob-glow{position:absolute;top:-10%;left:50%;transform:translateX(-50%);
+  width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(233,188,90,.09),transparent 65%);
+  animation:breathe 4s ease-in-out infinite}
+.ob-hero{position:absolute;top:60px;left:0;right:0;text-align:center;padding:0 24px}
+.ob-mark{width:68px;height:68px;border-radius:22px;
+  background:rgba(233,188,90,.07);border:1px solid rgba(233,188,90,.18);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.ob-mark span{font-family:var(--fd);font-size:32px;font-weight:800;color:var(--gold)}
+.ob-headline{font-family:var(--fd);font-size:30px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.ob-sub{font-size:14px;color:var(--t2)}
+.ob-card{background:var(--s1);border-radius:var(--r3) var(--r3) 0 0;padding:26px 20px 32px;position:relative;z-index:1}
+.ob-features{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.ob-feat{display:flex;align-items:center;gap:12px;padding:13px 14px;
+  background:var(--s2);border-radius:var(--r);
+  animation:slideLeft .5s ease both}
+.ob-feat:nth-child(1){animation-delay:.05s}
+.ob-feat:nth-child(2){animation-delay:.12s}
+.ob-feat:nth-child(3){animation-delay:.19s}
+.ob-feat:nth-child(4){animation-delay:.26s}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+.ob-feat-ico{width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.ob-feat-body h4{font-size:13px;font-weight:600;margin-bottom:2px}
+.ob-feat-body p{font-size:11px;color:var(--t3);line-height:1.4}
+
+/* ── AUTH ── */
+#s-auth{justify-content:flex-end}
+.auth-bg{position:absolute;inset:0;overflow:hidden}
+.auth-glow{position:absolute;top:-70px;left:50%;transform:translateX(-50%);
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(233,188,90,.08),transparent 65%);
+  animation:breathe 5s ease-in-out infinite}
+.auth-top{position:absolute;top:48px;left:0;right:0;text-align:center;padding:0 24px}
+.back-btn{display:flex;align-items:center;gap:5px;background:none;border:none;
+  color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;
+  font-family:var(--f);padding:0;width:fit-content;margin:0 auto 0 0;padding-left:20px;
+  transition:color .2s}
+.back-btn:active{color:var(--t1)}
+.auth-logo{margin-top:16px}
+.auth-mini-mark{width:50px;height:50px;border-radius:16px;
+  background:rgba(233,188,90,.07);border:1px solid rgba(233,188,90,.16);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 11px}
+.auth-mini-mark span{font-family:var(--fd);font-size:23px;font-weight:800;color:var(--gold)}
+.auth-sheet{background:var(--s1);border-radius:var(--r3) var(--r3) 0 0;
+  padding:22px 20px 32px;position:relative;z-index:1;
+  max-height:75vh;overflow-y:auto}
+.atabs{display:flex;background:var(--s2);border-radius:var(--r2);padding:3px;margin-bottom:18px}
+.atab{flex:1;padding:10px;border:none;background:none;
+  font-size:13px;font-weight:500;color:var(--t3);border-radius:10px;
+  cursor:pointer;transition:all .22s;font-family:var(--f)}
+.atab.on{background:var(--s3);color:var(--t1);box-shadow:0 1px 10px rgba(0,0,0,.3)}
+.afield{margin-bottom:13px}
+.afield label{display:block;font-size:10px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.afield input{width:100%;background:var(--s2);border:1.5px solid var(--b1);
+  color:var(--t1);border-radius:13px;padding:13px 15px;font-size:15px;
+  outline:none;transition:all .22s;font-family:var(--f);-webkit-appearance:none}
+.afield input:focus{border-color:rgba(233,188,90,.35);box-shadow:0 0 0 4px rgba(233,188,90,.06)}
+.afield input::placeholder{color:var(--t4)}
+.afield input.err{border-color:var(--redline)}
+.pass-wrap{position:relative}
+.pass-wrap .eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--t3);cursor:pointer;display:flex;padding:0}
+.aerr{background:var(--redbg);border:1px solid var(--redline);border-radius:10px;
+  padding:10px 13px;margin-bottom:13px;font-size:13px;color:var(--red);
+  display:flex;align-items:center;gap:7px;animation:errShake .3s}
+@keyframes errShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.adiv{display:flex;align-items:center;gap:11px;color:var(--t3);
+  font-size:12px;margin:14px 0}
+.adiv::before,.adiv::after{content:'';flex:1;height:1px;background:var(--b1)}
+.btn-google{width:100%;padding:14px;background:var(--s2);
+  border:1.5px solid var(--b2);border-radius:13px;
+  font-size:14px;font-weight:500;color:var(--t1);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .18s;font-family:var(--f)}
+.btn-google:active{background:var(--s3);transform:scale(.98)}
+.btn-google svg{width:18px;height:18px;flex-shrink:0}
+.forgot{text-align:center;margin-top:13px;font-size:13px;
+  color:var(--t2);cursor:pointer;transition:color .2s}
+.forgot:active{color:var(--gold)}
+
+/* ── SHARED BUTTONS ── */
+.btn-primary{width:100%;padding:15px;background:var(--gold);border:none;
+  border-radius:13px;font-family:var(--fd);font-size:16px;font-weight:700;
+  color:#09090b;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+  margin-bottom:10px}
+.btn-primary::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%);
+  pointer-events:none}
+.btn-primary:active{transform:scale(.97);background:var(--gold2)}
+.btn-primary:disabled{opacity:.4;pointer-events:none}
+.btn-primary.loading::before{content:'';position:absolute;top:50%;left:50%;
+  margin:-9px 0 0 -9px;width:18px;height:18px;border-radius:50%;
+  border:2px solid rgba(9,9,11,.3);border-top-color:#09090b;
+  animation:spin .7s linear infinite}
+.btn-primary.loading{color:transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-ghost{width:100%;padding:13px;background:none;border:none;
+  font-family:var(--f);font-size:14px;color:var(--t2);cursor:pointer;transition:color .2s}
+.btn-ghost:active{color:var(--t1)}
+.btn-danger{width:100%;padding:13px;background:var(--redbg);
+  border:1px solid var(--redline);border-radius:13px;
+  font-family:var(--fd);font-size:14px;font-weight:700;
+  color:var(--red);cursor:pointer;transition:all .18s}
+.btn-danger:active{background:rgba(232,85,85,.15)}
+
+/* ── APP SHELL ── */
+#s-app{flex-direction:column}
+.topbar{background:var(--bg);padding:8px 18px 10px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-logo{font-family:var(--fd);font-size:21px;font-weight:800;letter-spacing:-.5px}
+.topbar-logo span{color:var(--gold)}
+.period-pill{display:flex;align-items:center;gap:4px;background:var(--s2);
+  border-radius:var(--r4);padding:5px 11px;font-size:11px;color:var(--t2);
+  cursor:pointer;transition:all .2s;margin-top:3px}
+.period-pill:active{background:var(--s3)}
+.avatar-btn{width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:14px;font-weight:800;color:#09090b;
+  flex-shrink:0;overflow:hidden;transition:transform .2s}
+.avatar-btn:active{transform:scale(.92)}
+.avatar-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* ── SCROLL VIEW ── */
+.scroll-view{flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(80px + var(--sab) + 8px)}
+
+/* ── PAGES ── */
+.page{display:none;padding:14px 16px;animation:pgIn .3s cubic-bezier(.4,0,.2,1)}
+.page.on{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:20;
+  background:rgba(9,9,11,.88);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  display:flex;align-items:flex-end;padding:0 4px var(--sab)}
+.ntab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:12px 4px 8px;background:none;border:none;cursor:pointer;
+  color:var(--t3);font-family:var(--f);font-size:10px;font-weight:500;
+  transition:color .2s;position:relative}
+.ntab svg{width:21px;height:21px;transition:transform .2s}
+.ntab.on{color:var(--gold)}
+.ntab.on svg{transform:scale(1.08)}
+.ntab-dot{position:absolute;top:10px;left:calc(50% + 6px);
+  width:4px;height:4px;border-radius:50%;background:var(--gold);
+  opacity:0;transition:opacity .2s;pointer-events:none}
+.ntab.on .ntab-dot{opacity:1}
+.nadd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:0 4px 8px;cursor:pointer;border:none;background:none;
+  font-family:var(--f);font-size:10px;font-weight:500;color:var(--t3)}
+.nadd-ring{width:48px;height:48px;border-radius:50%;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 6px rgba(233,188,90,.1),0 6px 22px rgba(233,188,90,.38);
+  transition:all .2s;position:relative;top:-8px}
+.nadd-ring svg{width:22px;height:22px;stroke:#09090b;stroke-width:2.5}
+.nadd:active .nadd-ring{transform:scale(.91);
+  box-shadow:0 0 0 3px rgba(233,188,90,.08),0 3px 12px rgba(233,188,90,.22)}
+
+/* ── CARDS & COMPONENTS ── */
+.card{background:var(--s2);border-radius:var(--r3);padding:18px 18px 14px;
+  margin-bottom:14px;position:relative;overflow:hidden}
+.card::after{content:'';position:absolute;top:-50px;right:-50px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(233,188,90,.06),transparent 65%);
+  pointer-events:none}
+.hero-lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:7px}
+.hero-amt{font-family:var(--fd);font-size:44px;font-weight:800;
+  color:var(--gold);line-height:1;letter-spacing:-2.5px;margin-bottom:4px}
+.hero-period{font-size:12px;color:var(--t3);margin-bottom:14px}
+.hero-divider{height:1px;background:var(--b1);margin-bottom:13px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr)}
+.hs+.hs{border-left:1px solid var(--b1)}
+.hs{padding:0 8px;text-align:center}
+.hs:first-child{padding-left:0;text-align:left}
+.hs:last-child{padding-right:0;text-align:right}
+.hs-v{font-family:var(--fd);font-size:16px;font-weight:700}
+.hs-l{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--t3);margin-top:3px}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sec-h h3{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.sec-link{font-size:12px;color:var(--gold);cursor:pointer}
+
+/* ── BUDGET BARS ── */
+.budget-item{background:var(--s2);border-radius:var(--r);padding:13px 14px;margin-bottom:8px}
+.budget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.budget-cat{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.budget-cat-ico{width:30px;height:30px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.budget-amounts{text-align:right}
+.budget-spent{font-size:14px;font-weight:700}
+.budget-limit{font-size:10px;color:var(--t3);margin-top:1px}
+.budget-track{height:6px;background:var(--s4);border-radius:3px;overflow:hidden}
+.budget-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.budget-pct{font-size:10px;color:var(--t3);margin-top:4px;text-align:right}
+.budget-warn{font-size:10px;font-weight:600;margin-top:4px;text-align:right}
+
+/* ── RECURRING ── */
+.rec-item{background:var(--s2);border-radius:var(--r);padding:13px 14px;
+  margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  transition:background .12s}
+.rec-item:active{background:var(--s3)}
+.rec-ico{width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.rec-body{flex:1;min-width:0}
+.rec-name{font-size:14px;font-weight:500}
+.rec-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.rec-amt{font-size:14px;font-weight:700;color:var(--red);flex-shrink:0}
+.rec-badge{display:inline-flex;align-items:center;gap:4px;
+  background:var(--goldbg);border-radius:var(--r4);
+  padding:2px 8px;font-size:10px;font-weight:600;color:var(--gold);margin-top:3px}
+
+/* ── TRANSACTIONS ── */
+.tx{display:flex;align-items:center;gap:11px;background:var(--s2);
+  border-radius:var(--r);padding:12px 13px;margin-bottom:7px;cursor:pointer;
+  transition:background .12s}
+.tx:active{background:var(--s3)}
+.tx-ico{width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.tx-body{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:10px;color:var(--t3);margin-top:2px}
+.tx-amt{font-size:14px;font-weight:700;color:var(--red);flex-shrink:0}
+
+/* ── FAMILY ── */
+.family-member{background:var(--s2);border-radius:var(--r);padding:13px 14px;
+  margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.member-ava{width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:18px;font-weight:800;
+  color:#09090b;flex-shrink:0}
+.member-body{flex:1}
+.member-name{font-size:14px;font-weight:600}
+.member-email{font-size:11px;color:var(--t3);margin-top:1px}
+.member-badge{display:inline-flex;background:var(--goldbg);
+  border-radius:var(--r4);padding:2px 8px;
+  font-size:10px;font-weight:600;color:var(--gold);margin-top:4px}
+.member-total{font-size:14px;font-weight:700;color:var(--t1);flex-shrink:0;text-align:right}
+.member-sub{font-size:10px;color:var(--t3);margin-top:1px}
+.invite-card{background:var(--s2);border:1.5px dashed var(--b2);border-radius:var(--r);
+  padding:18px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.invite-card:active{border-color:var(--gold);background:var(--goldbg)}
+
+/* ── AI REPORT ── */
+.report-card{background:linear-gradient(135deg,rgba(167,140,248,.08),rgba(90,156,245,.05));
+  border:1px solid rgba(167,140,248,.18);border-radius:var(--r3);padding:18px;margin-bottom:14px}
+.report-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.report-orb{width:36px;height:36px;border-radius:50%;
+  background:conic-gradient(var(--gold),var(--orange),var(--purple),var(--teal),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:14px;font-weight:800;color:#09090b;
+  animation:hueR 12s linear infinite;flex-shrink:0}
+@keyframes hueR{to{filter:hue-rotate(360deg)}}
+.report-title{font-family:var(--fd);font-size:16px;font-weight:700}
+.report-sub{font-size:11px;color:var(--t3)}
+.report-body{font-size:13px;color:var(--t2);line-height:1.65;
+  background:rgba(0,0,0,.2);border-radius:10px;padding:12px;margin-bottom:12px}
+.report-highlights{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.highlight{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--t2)}
+.highlight-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.btn-gen-report{width:100%;padding:14px;background:var(--purplebg);
+  border:1px solid rgba(167,140,248,.25);border-radius:12px;
+  font-family:var(--fd);font-size:14px;font-weight:700;color:var(--purple);
+  cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gen-report:active{background:rgba(167,140,248,.15)}
+.btn-gen-report.loading{opacity:.6;pointer-events:none}
+
+/* ── CHAT ── */
+.chat-wrap{display:flex;flex-direction:column;
+  height:calc(100dvh - var(--sat) - 57px - calc(80px + var(--sab)) - 32px);
+  border-radius:var(--r);overflow:hidden;border:1px solid var(--b1)}
+.chat-head{background:var(--s2);padding:12px 15px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid var(--b1)}
+.chat-orb{width:36px;height:36px;border-radius:50%;
+  background:conic-gradient(var(--gold),var(--orange),var(--purple),var(--teal),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:14px;font-weight:800;color:#09090b;
+  animation:hueR 10s linear infinite;flex-shrink:0}
+.chat-msgs{flex:1;overflow-y:auto;padding:13px;background:var(--bg);
+  display:flex;flex-direction:column;gap:9px}
+.bub{max-width:86%;padding:10px 14px;border-radius:18px;
+  font-size:13px;line-height:1.55;animation:bIn .22s ease}
+@keyframes bIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.bub.user{align-self:flex-end;background:var(--gold);color:#09090b;
+  font-weight:500;border-bottom-right-radius:5px}
+.bub.ai{align-self:flex-start;background:var(--s2);color:var(--t1);
+  border:1px solid var(--b1);border-bottom-left-radius:5px}
+.bub.thinking{color:var(--t3);font-style:italic}
+.sugg-row{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;
+  background:var(--s2);border-top:1px solid var(--b1);flex-shrink:0}
+.sugg{background:var(--s3);border-radius:var(--r4);padding:6px 12px;
+  font-size:11px;font-weight:500;color:var(--t2);cursor:pointer;
+  white-space:nowrap;flex-shrink:0;border:none;font-family:var(--f);transition:all .15s}
+.sugg:active{color:var(--gold)}
+.chat-bar{display:flex;gap:7px;padding:10px 11px;
+  background:var(--s2);border-top:1px solid var(--b1);flex-shrink:0}
+.chat-bar input{flex:1;background:var(--s3);border:none;color:var(--t1);
+  border-radius:var(--r4);padding:10px 16px;font-family:var(--f);font-size:14px;outline:none}
+.chat-send{width:40px;height:40px;border-radius:50%;background:var(--gold);
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .18s}
+.chat-send:active{background:var(--gold2);transform:scale(.92)}
+
+/* ── FORMS ── */
+.fcard{background:var(--s2);border-radius:var(--r);margin-bottom:11px;overflow:hidden}
+.frow{display:flex;align-items:center;gap:11px;
+  padding:13px 15px;border-bottom:1px solid var(--b1)}
+.frow:last-child{border-bottom:none}
+.frow-ico{width:34px;height:34px;border-radius:10px;background:var(--s4);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.frow-body{flex:1;min-width:0}
+.frow-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:3px}
+.frow input,.frow select,.frow textarea{width:100%;background:none;border:none;
+  outline:none;color:var(--t1);font-family:var(--f);font-size:15px;-webkit-appearance:none}
+.frow input::placeholder,.frow textarea::placeholder{color:var(--t4)}
+.frow input[type=date]{color-scheme:dark}
+.frow select option{background:var(--s2)}
+.frow textarea{resize:none;line-height:1.5}
+.frow-right{font-size:13px;color:var(--t2);flex-shrink:0}
+
+/* ── AMOUNT INPUT ── */
+.amt-hero{text-align:center;padding:20px 8px 14px}
+.amt-hero input{font-family:var(--fd);font-size:52px;font-weight:800;letter-spacing:-3px;
+  background:none;border:none;outline:none;color:var(--t1);
+  width:100%;text-align:center;caret-color:var(--gold);padding:0}
+.amt-hero input::placeholder{color:var(--t4)}
+.amt-line{height:2px;background:var(--b1);border-radius:2px;
+  margin:0 24px;transition:background .2s}
+
+/* ── CAT GRID ── */
+.cat-section-lbl{font-size:10px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.cat-grid-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.cat-pick-opt{background:var(--s2);border-radius:12px;padding:11px 6px;
+  text-align:center;cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:1.5px solid transparent}
+.cat-pick-opt:active{transform:scale(.94)}
+.cat-pick-opt.sel{border-color:var(--gold);background:var(--goldbg)}
+.cat-pick-opt .ce{font-size:22px}
+.cat-pick-opt .cn{font-size:10px;font-weight:500;color:var(--t3)}
+.cat-pick-opt.sel .cn{color:var(--gold)}
+
+/* ── PERIOD SELECTOR ── */
+.period-opt{display:flex;align-items:center;justify-content:space-between;
+  padding:15px 0;border-bottom:1px solid var(--b1);cursor:pointer}
+.period-opt:last-of-type{border-bottom:none}
+.period-opt:active{opacity:.6}
+.period-opt.on .period-lbl{color:var(--gold);font-weight:600}
+.period-check{width:22px;height:22px;border-radius:50%;background:var(--gold);
+  display:none;align-items:center;justify-content:center}
+.period-opt.on .period-check{display:flex}
+
+/* ── SETTINGS ── */
+.settings-group{margin-bottom:16px}
+.settings-group-lbl{font-size:10px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:8px;padding-left:2px}
+.settings-card{background:var(--s2);border-radius:var(--r);overflow:hidden}
+.settings-row{display:flex;align-items:center;gap:11px;
+  padding:14px 15px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background .12s}
+.settings-row:last-child{border-bottom:none}
+.settings-row:active{background:var(--s3)}
+.srow-ico{width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.srow-body{flex:1}
+.srow-title{font-size:14px;font-weight:500}
+.srow-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.srow-val{font-size:12px;color:var(--t2);margin-right:4px;flex-shrink:0}
+.chev{width:15px;height:15px;color:var(--t3);flex-shrink:0}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--s4);
+  position:relative;cursor:pointer;transition:background .25s;flex-shrink:0;border:none}
+.toggle.on{background:var(--gold)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;background:#fff;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle.on::after{transform:translateX(18px)}
+
+/* ── SHEET ── */
+.overlay{position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .28s}
+.overlay.show{opacity:1;pointer-events:all}
+.overlay.show .sheet-panel{transform:translateY(0)}
+.sheet-panel{background:var(--s1);border-radius:var(--r3) var(--r3) 0 0;
+  padding:0 20px calc(28px + var(--sab));
+  max-height:92dvh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1)}
+.s-handle{width:36px;height:4px;background:rgba(255,255,255,.12);
+  border-radius:2px;margin:13px auto 18px}
+.s-title{font-family:var(--fd);font-size:20px;font-weight:800;margin-bottom:18px}
+
+/* ── PROFILE SHEET ── */
+.profile-ava-big{width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:28px;font-weight:800;color:#09090b;
+  margin:0 auto 13px;overflow:hidden}
+.profile-ava-big img{width:100%;height:100%;object-fit:cover}
+
+/* ── NOTIFICATION BADGE ── */
+.notif-badge{position:absolute;top:8px;right:8px;
+  width:8px;height:8px;border-radius:50%;background:var(--red);
+  border:1.5px solid var(--bg)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:44px 20px;animation:pgIn .4s ease}
+.empty .big{font-size:44px;margin-bottom:12px;opacity:.55}
+.empty h3{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--t2);margin-bottom:7px}
+.empty p{font-size:13px;color:var(--t3);line-height:1.55}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:calc(80px + var(--sab) + 12px);
+  left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--s3);border-radius:var(--r4);padding:10px 20px;
+  font-size:13px;font-weight:500;z-index:999;
+  opacity:0;transition:all .28s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;white-space:nowrap;
+  box-shadow:0 6px 22px rgba(0,0,0,.35)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── MIC ── */
+.mic-wrap{background:var(--s2);border-radius:var(--r);padding:16px;
+  margin-bottom:11px;text-align:center;cursor:pointer;transition:all .18s;border:1px solid transparent}
+.mic-wrap:active{border-color:var(--gold)}
+.mic-wrap.rec{border-color:var(--red);border-style:solid;background:var(--redbg);animation:pls .9s ease-in-out infinite}
+@keyframes pls{0%,100%{box-shadow:0 0 0 0 rgba(232,85,85,.3)}50%{box-shadow:0 0 0 8px rgba(232,85,85,0)}}
+.mic-circle{width:50px;height:50px;border-radius:50%;
+  background:var(--s3);margin:0 auto 9px;
+  display:flex;align-items:center;justify-content:center;transition:background .2s}
+.mic-wrap.rec .mic-circle{background:rgba(232,85,85,.14)}
+.mic-lbl{font-size:12px;font-weight:500;color:var(--t2)}
+.mic-wrap.rec .mic-lbl{color:var(--red)}
+.mic-transcript{margin-top:9px;background:var(--s3);border-radius:10px;
+  padding:10px 12px;font-size:13px;color:var(--t2);text-align:left;
+  min-height:36px;line-height:1.5}
+
+/* ── CHARTS ── */
+.chart-inner{background:var(--s2);border-radius:20px;padding:16px;margin-bottom:13px}
+/* ── DISTRIBUTION CARD ── */
+.distrib-card{background:var(--s2);border-radius:20px;padding:18px 16px;margin-bottom:13px}
+.distrib-total-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.distrib-total-amt{font-family:var(--fd);font-size:26px;font-weight:800;letter-spacing:-.5px}
+.distrib-total-lbl{font-size:11px;color:var(--t3);font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.distrib-stack{width:100%;height:10px;border-radius:100px;overflow:hidden;display:flex;gap:2px;margin-bottom:18px}
+.distrib-seg{height:100%;border-radius:100px;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.distrib-rows{display:flex;flex-direction:column;gap:10px}
+.distrib-row{display:flex;align-items:center;gap:10px}
+.distrib-bar-wrap{flex:1;height:6px;background:var(--s4);border-radius:100px;overflow:hidden;position:relative}
+.distrib-bar-fill{height:100%;border-radius:100px;width:0;transition:width .85s cubic-bezier(.4,0,.2,1)}
+.distrib-emoji{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.distrib-name{font-size:12px;color:var(--t2);width:72px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.distrib-amt{font-size:12px;font-weight:600;color:var(--t1);width:72px;text-align:right;flex-shrink:0}
+.distrib-pct{font-size:11px;color:var(--t3);width:32px;text-align:right;flex-shrink:0}
+.distrib-empty{text-align:center;padding:22px 0;color:var(--t3);font-size:13px}
+/* old compat */
+.donut-row{display:flex;align-items:center;gap:14px}
+.donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.donut-wrap svg{width:120px;height:120px;transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none}
+.donut-cval{font-family:var(--fd);font-size:17px;font-weight:800;letter-spacing:-.5px}
+.donut-clbl{font-size:8px;color:var(--t3);font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-top:1px}
+.legend{flex:1;display:flex;flex-direction:column;gap:7px}
+.lrow{display:flex;align-items:center;justify-content:space-between}
+.lrow-l{display:flex;align-items:center;gap:6px;font-size:12px}
+.ldot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.lpct{font-size:11px;font-weight:600}
+.bars-wrap{display:flex;align-items:flex-end;gap:7px;height:72px;margin-bottom:8px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.btrack{width:100%;background:var(--s4);border-radius:4px 4px 0 0;overflow:hidden;flex:1;position:relative}
+.bfill{position:absolute;bottom:0;left:0;right:0;border-radius:4px 4px 0 0;transition:height .85s cubic-bezier(.4,0,.2,1)}
+.blbl{font-size:11px}
+
+/* ── PROFILE CARD in settings ── */
+.profile-card-settings{background:var(--s2);border-radius:var(--r);padding:18px;
+  margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.pc-ava{width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:21px;font-weight:800;color:#09090b;
+  flex-shrink:0;overflow:hidden}
+.pc-ava img{width:100%;height:100%;object-fit:cover}
+.active-badge{display:inline-block;background:var(--goldbg);
+  border-radius:var(--r4);padding:2px 9px;
+  font-size:10px;font-weight:600;color:var(--gold);margin-top:5px}
+
+/* ── SPARKLINE ── */
+.spark-card{background:var(--s2);border-radius:20px;padding:16px;margin-bottom:13px}
+.spark-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.spark-amt{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:-.5px}
+.spark-badge{background:rgba(82,201,138,.1);border-radius:var(--r4);
+  padding:3px 8px;font-size:11px;font-weight:600;color:var(--green)}
+
+/* ── API KEY ROW ── */
+.key-row{background:var(--goldbg);border:1px solid rgba(233,188,90,.2);
+  border-radius:var(--r2);padding:11px 14px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+.key-row input{flex:1;background:none;border:none;color:var(--t1);
+  font-family:var(--f);font-size:13px;outline:none}
+.key-row input::placeholder{color:var(--t3);font-size:12px}
+.key-row button{background:var(--gold);color:#09090b;border:none;
+  border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fd)}
+
+/* ── MISC ── */
+.tag{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r4);
+  padding:3px 9px;font-size:10px;font-weight:600}
+.divider-line{height:1px;background:var(--b1);margin:12px 0}
+.loading-screen{position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:500;
+  transition:opacity .5s}
+.loading-screen.out{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SPLASH -->
+  <div id="s-splash" class="screen up">
+    <div class="splash-glow"></div>
+    <div class="splash-logo">
+      <div class="logo-ring"><span class="logo-k">K</span></div>
+      <div class="splash-name">kasa.</div>
+      <div class="splash-tag">Tu control de gastos familiar</div>
+      <div class="splash-dots">
+        <div class="sdot"></div><div class="sdot"></div><div class="sdot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div id="s-onboard" class="screen">
+    <div class="ob-bg"><div class="ob-grid"></div><div class="ob-glow"></div></div>
+    <div class="ob-hero">
+      <div class="ob-mark"><span>K</span></div>
+      <div class="ob-headline">Kasa.</div>
+      <div class="ob-sub">Control de gastos para toda la familia</div>
+    </div>
+    <div class="ob-card">
+      <div class="ob-features">
+        <div class="ob-feat">
+          <div class="ob-feat-ico" style="background:var(--goldbg)">🎙️</div>
+          <div class="ob-feat-body"><h4>Registro por voz o texto</h4><p>Di el gasto y Kasa lo clasifica solo</p></div>
+        </div>
+        <div class="ob-feat">
+          <div class="ob-feat-ico" style="background:var(--purplebg)">🧠</div>
+          <div class="ob-feat-body"><h4>IA que entiende tus finanzas</h4><p>Pregunta lo que quieras, obtén respuestas reales</p></div>
+        </div>
+        <div class="ob-feat">
+          <div class="ob-feat-ico" style="background:var(--greenbg)">👨‍👩‍👧</div>
+          <div class="ob-feat-body"><h4>Modo familiar</h4><p>Comparte gastos del hogar con tu familia</p></div>
+        </div>
+        <div class="ob-feat">
+          <div class="ob-feat-ico" style="background:var(--bluebg)">🎯</div>
+          <div class="ob-feat-body"><h4>Presupuestos y metas</h4><p>Define límites y recibe alertas inteligentes</p></div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="S('s-auth')">Comenzar →</button>
+      <button class="btn-ghost" onclick="S('s-auth')">Ya tengo cuenta</button>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div id="s-auth" class="screen">
+    <div class="auth-bg"><div class="auth-glow"></div></div>
+    <div class="auth-top">
+      <button class="back-btn" onclick="S('s-onboard')">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="10,3 4,8 10,13"/></svg>
+        Volver
+      </button>
+      <div class="auth-logo">
+        <div class="auth-mini-mark"><span>K</span></div>
+        <div style="font-family:var(--fd);font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px" id="authTitle">Bienvenido de vuelta</div>
+        <div style="font-size:13px;color:var(--t2)" id="authSub">Ingresa a tu cuenta Kasa</div>
+      </div>
+    </div>
+    <div class="auth-sheet">
+      <div class="atabs">
+        <button class="atab on" id="tab-in"  onclick="authMode('login')">Entrar</button>
+        <button class="atab"    id="tab-reg" onclick="authMode('register')">Crear cuenta</button>
+      </div>
+      <div id="auth-err" style="display:none" class="aerr"></div>
+      <div id="reg-name-fields" style="display:none">
+        <div class="afield"><label>Tu nombre</label>
+          <input type="text" id="a-name" placeholder="¿Cómo te llamamos?"></div>
+      </div>
+      <div class="afield"><label>Correo electrónico</label>
+        <input type="email" id="a-email" placeholder="tu@correo.com" inputmode="email" autocomplete="email"></div>
+      <div class="afield"><label>Contraseña</label>
+        <div class="pass-wrap">
+          <input type="password" id="a-pass" placeholder="Mínimo 6 caracteres"
+            style="padding-right:46px" onkeydown="if(event.key==='Enter')doAuth()">
+          <button class="eye" onclick="toggleEye()" tabindex="-1">
+            <svg id="eye-ico" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/>
+              <circle cx="10" cy="10" r="2.5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="reg-confirm" style="display:none">
+        <div class="afield"><label>Confirmar contraseña</label>
+          <input type="password" id="a-confirm" placeholder="Repite la contraseña"></div>
+      </div>
+      <div id="remember-row" style="display:flex;align-items:center;gap:9px;margin:4px 0 14px">
+        <input type="checkbox" id="a-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer" checked>
+        <label for="a-remember" style="font-size:13px;color:var(--t2);cursor:pointer">Recordar sesión en este dispositivo</label>
+      </div>
+      <button class="btn-primary" id="auth-btn" onclick="doAuth()">Entrar</button>
+      <div class="forgot" id="forgot-link" onclick="doForgot()">¿Olvidaste tu contraseña?</div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="s-app" class="screen">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-logo">ka<span>$</span>a</div>
+        <div class="period-pill" onclick="openSheet('period-sheet')">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="10" height="9" rx="1.5"/><line x1="1" y1="5" x2="11" y2="5"/><line x1="4" y1="1" x2="4" y2="3"/><line x1="8" y1="1" x2="8" y2="3"/></svg>
+          <span id="period-label">Este mes</span>
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,3.5 5,6.5 8,3.5"/></svg>
+        </div>
+      </div>
+      <button class="avatar-btn" id="ava-btn" onclick="openSheet('profile-sheet')">K</button>
+    </div>
+
+    <!-- SCROLL -->
+    <div class="scroll-view" id="scroll-view">
+
+      <!-- ── PAGE: HOME ── -->
+      <div class="page on" id="pg-home">
+        <div class="card" id="hero-card">
+          <div class="hero-lbl">Total gastado</div>
+          <div class="hero-amt" id="hero-amt">$0</div>
+          <div class="hero-period" id="hero-period-txt">—</div>
+          <div class="hero-divider"></div>
+          <div class="hero-stats">
+            <div class="hs"><div class="hs-v" id="stat-count">0</div><div class="hs-l">Gastos</div></div>
+            <div class="hs"><div class="hs-v" id="stat-avg">$0</div><div class="hs-l">Promedio</div></div>
+            <div class="hs"><div class="hs-v" id="stat-top" style="font-size:20px">—</div><div class="hs-l">Principal</div></div>
+          </div>
+        </div>
+
+        <!-- BUDGET ALERTS -->
+        <div id="budget-alerts-home"></div>
+
+        <!-- AI MONTHLY REPORT -->
+        <div id="monthly-report-home"></div>
+
+        <!-- CHARTS -->
+        <div class="sec-h"><h3>Distribución</h3></div>
+        <div id="distrib-chart"></div>
+
+        <div class="sec-h"><h3>Tendencia semanal</h3></div>
+        <div class="spark-card">
+          <div class="spark-head">
+            <div>
+              <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:3px">Esta semana</div>
+              <div class="spark-amt" id="spark-amt">$0</div>
+            </div>
+            <div class="spark-badge" id="spark-trend">—</div>
+          </div>
+          <svg width="100%" height="52" viewBox="0 0 300 52" preserveAspectRatio="none" id="spark-svg"></svg>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--t3)" id="spark-days"></div>
+        </div>
+
+        <!-- RECURRING UPCOMING -->
+        <div id="upcoming-recurring-home"></div>
+
+        <div class="sec-h" style="margin-top:4px">
+          <h3>Recientes</h3>
+          <span class="sec-link" onclick="goPage('list')">Ver todos →</span>
+        </div>
+        <div id="recent-list"></div>
+      </div>
+
+      <!-- ── PAGE: ADD ── -->
+      <div class="page" id="pg-add">
+        <div class="amt-hero">
+          <input type="number" id="add-amt" placeholder="0" inputmode="decimal" min="0">
+          <div class="amt-line" id="amt-line"></div>
+        </div>
+        <div class="fcard">
+          <div class="frow">
+            <div class="frow-ico">✏️</div>
+            <div class="frow-body">
+              <div class="frow-lbl">Descripción</div>
+              <input id="add-desc" placeholder="¿En qué gastaste?" autocomplete="off">
+            </div>
+          </div>
+          <div class="frow">
+            <div class="frow-ico">📅</div>
+            <div class="frow-body">
+              <div class="frow-lbl">Fecha</div>
+              <input type="date" id="add-date">
+            </div>
+          </div>
+          <div class="frow">
+            <div class="frow-ico">📝</div>
+            <div class="frow-body">
+              <div class="frow-lbl">Nota</div>
+              <input id="add-note" placeholder="Detalle adicional...">
+            </div>
+          </div>
+          <div class="frow">
+            <div class="frow-ico">👁️</div>
+            <div class="frow-body">
+              <div class="frow-lbl">Visibilidad</div>
+              <select id="add-visibility">
+                <option value="personal">Solo yo (personal)</option>
+                <option value="family">Familiar (todos lo ven)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-section-lbl">Categoría</div>
+        <div class="cat-grid-pick" id="cat-grid-pick"></div>
+
+        <div class="mic-wrap" id="mic-wrap" onclick="toggleMic()">
+          <div class="mic-circle" id="mic-circle">
+            <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="7" y="1" width="8" height="12" rx="4"/>
+              <path d="M3 11a8 8 0 0 0 16 0"/>
+              <line x1="11" y1="19" x2="11" y2="22"/>
+            </svg>
+          </div>
+          <div class="mic-lbl" id="mic-lbl">Toca para registrar por voz</div>
+          <div class="mic-transcript" id="mic-transcript">El texto aparecerá aquí...</div>
+        </div>
+
+        <button class="btn-primary" id="save-exp-btn" onclick="saveExpense()">Guardar gasto →</button>
+      </div>
+
+      <!-- ── PAGE: LIST ── -->
+      <div class="page" id="pg-list">
+        <div style="display:flex;align-items:center;gap:9px;background:var(--s2);border-radius:var(--r2);padding:11px 14px;margin-bottom:12px">
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="var(--t3)" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
+          <input style="flex:1;background:none;border:none;outline:none;color:var(--t1);font-size:14px;font-family:var(--f)" placeholder="Buscar..." id="search-q" oninput="renderList()">
+        </div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:9px;margin-bottom:4px" id="filter-row"></div>
+        <div id="full-list"></div>
+      </div>
+
+      <!-- ── PAGE: BUDGETS ── -->
+      <div class="page" id="pg-budgets">
+        <div class="sec-h">
+          <h3>Mis presupuestos</h3>
+          <span class="sec-link" onclick="openSheet('new-budget-sheet')">+ Nuevo</span>
+        </div>
+        <div id="budgets-list"></div>
+        <div class="sec-h" style="margin-top:16px">
+          <h3>Metas de ahorro</h3>
+          <span class="sec-link" onclick="openSheet('new-goal-sheet')">+ Nueva</span>
+        </div>
+        <div id="goals-list"></div>
+      </div>
+
+      <!-- ── PAGE: AI ── -->
+      <div class="page" id="pg-ai">
+        <div class="key-row" id="key-row">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--gold)" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r=".5" fill="var(--gold)"/></svg>
+          <input type="password" id="key-input" placeholder="API key Anthropic (console.anthropic.com)">
+          <button onclick="saveApiKey()">OK</button>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-head">
+            <div class="chat-orb">K</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Kasa IA</div>
+              <div style="font-size:11px;color:var(--t3)">Pregúntame sobre tus gastos</div>
+            </div>
+          </div>
+          <div class="chat-msgs" id="chat-msgs"></div>
+          <div class="sugg-row" id="sugg-row">
+            <button class="sugg" onclick="useSugg(this)">¿Cuánto gasté en comida?</button>
+            <button class="sugg" onclick="useSugg(this)">¿En qué categoría gasto más?</button>
+            <button class="sugg" onclick="useSugg(this)">¿Cuánto llevo vs mi presupuesto?</button>
+            <button class="sugg" onclick="useSugg(this)">¿Cuáles son mis gastos fijos?</button>
+            <button class="sugg" onclick="useSugg(this)">Dame un resumen del mes</button>
+            <button class="sugg" onclick="useSugg(this)">¿En qué puedo ahorrar?</button>
+          </div>
+          <div class="chat-bar">
+            <input id="chat-q" placeholder="Pregunta algo sobre tus finanzas..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="chat-send" onclick="sendChat()">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#09090b" stroke-width="2.5"><line x1="2" y1="8" x2="14" y2="8"/><polyline points="9,3 14,8 9,13"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE: SETTINGS ── -->
+      <div class="page" id="pg-settings">
+        <div class="profile-card-settings">
+          <div class="pc-ava" id="settings-ava">K</div>
+          <div>
+            <div style="font-family:var(--fd);font-size:17px;font-weight:700" id="settings-name">—</div>
+            <div style="font-size:12px;color:var(--t2)" id="settings-email">—</div>
+            <div class="active-badge">activo</div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Período</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="openSheet('period-sheet')">
+              <div class="srow-ico" style="background:var(--goldbg)">📅</div>
+              <div class="srow-body"><div class="srow-title">Período activo</div><div class="srow-sub">Filtra el dashboard y reportes</div></div>
+              <div class="srow-val" id="settings-period-val">Este mes</div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Familia</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="goPage('family')">
+              <div class="srow-ico" style="background:var(--greenbg)">👨‍👩‍👧</div>
+              <div class="srow-body"><div class="srow-title">Mi familia / hogar</div><div class="srow-sub" id="family-count-lbl">Gestiona miembros e invitaciones</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+            <div class="settings-row" onclick="goPage('recurring')">
+              <div class="srow-ico" style="background:var(--bluebg)">🔄</div>
+              <div class="srow-body"><div class="srow-title">Gastos recurrentes</div><div class="srow-sub">Fijos mensuales automáticos</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Notificaciones</div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="srow-ico" style="background:var(--purplebg)">🔔</div>
+              <div class="srow-body"><div class="srow-title">Alertas de presupuesto</div><div class="srow-sub">Cuando llegas al 80% o lo superas</div></div>
+              <button class="toggle on" id="notif-budget-toggle" onclick="this.classList.toggle('on')"></button>
+            </div>
+            <div class="settings-row">
+              <div class="srow-ico" style="background:var(--purplebg)">📊</div>
+              <div class="srow-body"><div class="srow-title">Resumen semanal</div><div class="srow-sub">Todos los lunes con tu resumen</div></div>
+              <button class="toggle on" id="notif-weekly-toggle" onclick="this.classList.toggle('on')"></button>
+            </div>
+            <div class="settings-row">
+              <div class="srow-ico" style="background:var(--purplebg)">📅</div>
+              <div class="srow-body"><div class="srow-title">Gastos recurrentes</div><div class="srow-sub">Aviso el día que se registran</div></div>
+              <button class="toggle on" id="notif-rec-toggle" onclick="this.classList.toggle('on')"></button>
+            </div>
+            <div class="settings-row" onclick="requestPushPermission()">
+              <div class="srow-ico" style="background:var(--goldbg)">📲</div>
+              <div class="srow-body"><div class="srow-title">Activar notificaciones push</div><div class="srow-sub" id="push-status">Toca para habilitar</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Inteligencia Artificial</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="goPage('ai')">
+              <div class="srow-ico" style="background:var(--purplebg)">🧠</div>
+              <div class="srow-body"><div class="srow-title">API Key Anthropic</div><div class="srow-sub" id="key-status-lbl">No configurada</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Categorías</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="goPage('categories')">
+              <div class="srow-ico" style="background:var(--goldbg)">🏷️</div>
+              <div class="srow-body"><div class="srow-title">Mis categorías</div><div class="srow-sub" id="cats-count-lbl">Gestiona tus categorías</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Datos</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="exportCSV()">
+              <div class="srow-ico" style="background:var(--greenbg)">📊</div>
+              <div class="srow-body"><div class="srow-title">Exportar CSV</div><div class="srow-sub">Para Excel o Google Sheets</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+            <div class="settings-row" onclick="exportJSON()">
+              <div class="srow-ico" style="background:var(--bluebg)">💾</div>
+              <div class="srow-body"><div class="srow-title">Backup JSON</div><div class="srow-sub">Copia de seguridad completa</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-lbl">Cuenta</div>
+          <div class="settings-card">
+            <div class="settings-row" onclick="confirmSignOut()">
+              <div class="srow-ico" style="background:var(--redbg)">🚪</div>
+              <div class="srow-body"><div class="srow-title" style="color:var(--red)">Cerrar sesión</div></div>
+              <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="var(--red)" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:22px 0 6px;color:var(--t3);font-size:11px">
+          <div style="font-family:var(--fd);font-size:18px;color:var(--t2);margin-bottom:5px">ka<span style="color:var(--gold)">$</span>a</div>
+          <div>Firebase · Datos privados por usuario · Sin suscripción</div>
+        </div>
+      </div>
+
+      <!-- ── PAGE: FAMILY ── -->
+      <div class="page" id="pg-family">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <button onclick="goPage('settings')" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:0;display:flex">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12,4 6,10 12,16"/></svg>
+          </button>
+          <div style="font-family:var(--fd);font-size:20px;font-weight:800">Mi Familia</div>
+        </div>
+        <div class="sec-h"><h3>Miembros del hogar</h3></div>
+        <div id="family-list"></div>
+        <div class="invite-card" onclick="openSheet('invite-sheet')">
+          <div style="font-size:28px;margin-bottom:7px">👋</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Invitar familiar</div>
+          <div style="font-size:12px;color:var(--t3)">Comparten gastos del hogar y ven el dashboard familiar</div>
+        </div>
+        <div class="sec-h" style="margin-top:16px"><h3>Gastos familiares recientes</h3></div>
+        <div id="family-expenses-list"></div>
+      </div>
+
+      <!-- ── PAGE: RECURRING ── -->
+      <div class="page" id="pg-recurring">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="goPage('settings')" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:0;display:flex">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12,4 6,10 12,16"/></svg>
+            </button>
+            <div style="font-family:var(--fd);font-size:20px;font-weight:800">Gastos Fijos</div>
+          </div>
+          <button onclick="openSheet('new-recurring-sheet')" style="background:var(--gold);border:none;border-radius:var(--r4);padding:8px 14px;font-family:var(--fd);font-size:13px;font-weight:700;color:#09090b;cursor:pointer">+ Nuevo</button>
+        </div>
+        <div id="recurring-list"></div>
+        <div style="background:var(--s2);border-radius:var(--r);padding:14px 15px;margin-top:8px">
+          <div style="font-size:12px;color:var(--t3);line-height:1.6">
+            🔄 Los gastos fijos se registran automáticamente el día del mes que configures. Recibirás una notificación cada vez que se cree uno.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE: CATEGORIES ── -->
+      <div class="page" id="pg-categories">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="goPage('settings')" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:0;display:flex">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12,4 6,10 12,16"/></svg>
+            </button>
+            <div style="font-family:var(--fd);font-size:20px;font-weight:800">Categorías</div>
+          </div>
+          <button onclick="openNewCatSheet()" style="background:var(--gold);border:none;border-radius:var(--r4);padding:8px 14px;font-family:var(--fd);font-size:13px;font-weight:700;color:#09090b;cursor:pointer">+ Nueva</button>
+        </div>
+        <div id="cat-manage-grid"></div>
+      </div>
+
+    </div><!-- /scroll-view -->
+
+    <!-- BOTTOM NAV -->
+    <nav class="bnav">
+      <button class="ntab on" id="nt-home" onclick="goPage('home')">
+        <div class="ntab-dot"></div>
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10l8-8 8 8v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="8,21 8,13 14,13 14,21"/></svg>
+        Inicio
+      </button>
+      <button class="ntab" id="nt-list" onclick="goPage('list')">
+        <div class="ntab-dot"></div>
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="12" y2="16"/></svg>
+        Gastos
+      </button>
+      <button class="nadd" onclick="goPage('add')">
+        <div class="nadd-ring">
+          <svg viewBox="0 0 22 22" fill="none"><line x1="11" y1="5" x2="11" y2="17" stroke="inherit"/><line x1="5" y1="11" x2="17" y2="11" stroke="inherit"/></svg>
+        </div>
+        <span>Nuevo</span>
+      </button>
+      <button class="ntab" id="nt-budgets" onclick="goPage('budgets')">
+        <div class="ntab-dot"></div>
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><polyline points="11,7 11,11 14,13"/></svg>
+        Metas
+      </button>
+      <button class="ntab" id="nt-ai" onclick="goPage('ai')">
+        <div class="ntab-dot"></div>
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><path d="M8 9c0-1.7 1.3-3 3-3s3 1.3 3 3c0 1.5-1 2.5-2.5 3.5v1"/><circle cx="11" cy="17.5" r=".8" fill="currentColor"/></svg>
+        Kasa IA
+      </button>
+    </nav>
+  </div><!-- /s-app -->
+
+</div><!-- /app -->
+
+<!-- ══════════════════════ SHEETS ══════════════════════ -->
+
+<!-- PERIOD -->
+<div class="overlay" id="period-sheet" onclick="if(event.target===this)closeSheet('period-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title">Período de análisis</div>
+    <div id="period-opts-list"></div>
+    <div id="custom-date-block" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <div><div class="frow-lbl" style="margin-bottom:5px">Desde</div>
+          <input type="date" id="custom-from" style="width:100%;background:var(--s2);border:1px solid var(--b1);color:var(--t1);border-radius:10px;padding:10px;font-family:var(--f);font-size:14px;outline:none;color-scheme:dark"></div>
+        <div><div class="frow-lbl" style="margin-bottom:5px">Hasta</div>
+          <input type="date" id="custom-to" style="width:100%;background:var(--s2);border:1px solid var(--b1);color:var(--t1);border-radius:10px;padding:10px;font-family:var(--f);font-size:14px;outline:none;color-scheme:dark"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:14px" onclick="applyCustomPeriod()">Aplicar período</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT EXPENSE -->
+<div class="overlay" id="edit-sheet" onclick="if(event.target===this)closeSheet('edit-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title">Editar gasto</div>
+    <div class="fcard">
+      <div class="frow"><div class="frow-ico">💰</div><div class="frow-body"><div class="frow-lbl">Monto</div><input type="number" id="e-amt" inputmode="decimal"></div></div>
+      <div class="frow"><div class="frow-ico">✏️</div><div class="frow-body"><div class="frow-lbl">Descripción</div><input type="text" id="e-desc"></div></div>
+      <div class="frow"><div class="frow-ico">📅</div><div class="frow-body"><div class="frow-lbl">Fecha</div><input type="date" id="e-date"></div></div>
+      <div class="frow"><div class="frow-ico">📝</div><div class="frow-body"><div class="frow-lbl">Nota</div><input type="text" id="e-note" placeholder="Opcional..."></div></div>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:4px">
+      <button class="btn-danger" style="flex:1" onclick="deleteExpense()">Eliminar</button>
+      <button class="btn-primary" style="flex:2;margin-bottom:0" onclick="updateExpense()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="overlay" id="profile-sheet" onclick="if(event.target===this)closeSheet('profile-sheet')">
+  <div class="sheet-panel" style="max-height:90vh;overflow-y:auto">
+    <div class="s-handle"></div>
+
+    <!-- Avatar + nombre -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--b1);margin-bottom:18px">
+      <div class="profile-ava-big" id="profile-ava-big" style="margin-bottom:12px">K</div>
+      <div style="font-family:var(--fd);font-size:20px;font-weight:800;text-align:center" id="profile-name">—</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:3px" id="profile-email">—</div>
+      <div id="profile-verify-badge" style="display:none;margin-top:6px;font-size:11px;color:var(--gold);background:var(--goldbg);padding:3px 10px;border-radius:100px">✉️ Correo no verificado</div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px 16px;margin-top:14px;font-size:12px;color:var(--t3);line-height:1.8;text-align:center" id="profile-stats">—</div>
+    </div>
+
+    <!-- Editar nombre -->
+    <div class="settings-group" style="margin-bottom:0">
+      <div class="settings-group-lbl">Perfil</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openEditName()">
+          <div class="srow-ico" style="background:var(--goldbg)">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l4 4-9 9H3v-4L12 2z"/></svg>
+          </div>
+          <div class="srow-body"><div class="srow-title">Nombre de usuario</div><div class="srow-sub" id="profile-name-sub">—</div></div>
+          <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seguridad -->
+    <div class="settings-group" style="margin-bottom:0">
+      <div class="settings-group-lbl">Seguridad</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openChangePassword()">
+          <div class="srow-ico" style="background:var(--bluebg)">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="12" height="9" rx="1.5"/><path d="M6 8V5.5a3 3 0 016 0V8"/><circle cx="9" cy="12.5" r="1"/></svg>
+          </div>
+          <div class="srow-body"><div class="srow-title">Cambiar contraseña</div><div class="srow-sub">Recibirás un correo con el enlace</div></div>
+          <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+        </div>
+        <div class="settings-row" onclick="openChangeEmail()">
+          <div class="srow-ico" style="background:var(--bluebg)">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="14" height="10" rx="1.5"/><polyline points="2,4 9,10 16,4"/></svg>
+          </div>
+          <div class="srow-body"><div class="srow-title">Cambiar correo</div><div class="srow-sub" id="profile-email-sub">—</div></div>
+          <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Apariencia -->
+    <div class="settings-group" style="margin-bottom:0">
+      <div class="settings-group-lbl">Apariencia</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="srow-ico" style="background:var(--s3)">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="4"/><line x1="9" y1="1" x2="9" y2="3"/><line x1="9" y1="15" x2="9" y2="17"/><line x1="1" y1="9" x2="3" y2="9"/><line x1="15" y1="9" x2="17" y2="9"/><line x1="3.2" y1="3.2" x2="4.6" y2="4.6"/><line x1="13.4" y1="13.4" x2="14.8" y2="14.8"/><line x1="3.2" y1="14.8" x2="4.6" y2="13.4"/><line x1="13.4" y1="4.6" x2="14.8" y2="3.2"/></svg>
+          </div>
+          <div class="srow-body"><div class="srow-title">Tema claro</div><div class="srow-sub">Cambia entre oscuro y claro</div></div>
+          <button class="toggle" id="theme-toggle" onclick="toggleTheme()"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuenta -->
+    <div class="settings-group">
+      <div class="settings-group-lbl">Cuenta</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="confirmSignOut()">
+          <div class="srow-ico" style="background:var(--redbg)">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="var(--red)" stroke-width="1.5"><path d="M7 3H3a1 1 0 00-1 1v10a1 1 0 001 1h4"/><polyline points="12,5 16,9 12,13"/><line x1="16" y1="9" x2="6" y2="9"/></svg>
+          </div>
+          <div class="srow-body"><div class="srow-title" style="color:var(--red)">Cerrar sesión</div></div>
+          <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="var(--red)" stroke-width="1.5"><polyline points="4,2 10,7 4,12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline edit panels (hidden by default) -->
+    <div id="edit-name-panel" style="display:none;background:var(--s2);border-radius:14px;padding:16px;margin-top:4px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Cambiar nombre</div>
+      <input id="edit-name-input" type="text" placeholder="Tu nombre" style="width:100%;background:var(--s3);border:1.5px solid var(--b1);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:var(--f);margin-bottom:10px">
+      <button onclick="saveDisplayName()" class="btn-primary" style="padding:11px;font-size:14px">Guardar nombre</button>
+    </div>
+
+    <div id="change-email-panel" style="display:none;background:var(--s2);border-radius:14px;padding:16px;margin-top:4px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">Cambiar correo</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Por seguridad necesitas ingresar tu contraseña actual.</div>
+      <input id="new-email-input" type="email" placeholder="Nuevo correo" style="width:100%;background:var(--s3);border:1.5px solid var(--b1);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:var(--f);margin-bottom:8px">
+      <input id="email-pass-input" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--s3);border:1.5px solid var(--b1);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:var(--f);margin-bottom:10px">
+      <button onclick="saveNewEmail()" class="btn-primary" style="padding:11px;font-size:14px">Actualizar correo</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW BUDGET -->
+<div class="overlay" id="new-budget-sheet" onclick="if(event.target===this)closeSheet('new-budget-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title">Nuevo presupuesto</div>
+    <div class="fcard">
+      <div class="frow">
+        <div class="frow-ico">🏷️</div>
+        <div class="frow-body"><div class="frow-lbl">Categoría</div>
+          <select id="budget-cat"><option value="">Selecciona...</option></select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="frow-ico">💰</div>
+        <div class="frow-body"><div class="frow-lbl">Límite mensual ($)</div>
+          <input type="number" id="budget-limit" placeholder="ej. 200000" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveBudget()">Crear presupuesto</button>
+  </div>
+</div>
+
+<!-- NEW GOAL -->
+<div class="overlay" id="new-goal-sheet" onclick="if(event.target===this)closeSheet('new-goal-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title">Nueva meta de ahorro</div>
+    <div class="fcard">
+      <div class="frow"><div class="frow-ico">🎯</div><div class="frow-body"><div class="frow-lbl">Nombre de la meta</div><input type="text" id="goal-name" placeholder="ej. Viaje a Cartagena"></div></div>
+      <div class="frow"><div class="frow-ico">💰</div><div class="frow-body"><div class="frow-lbl">Monto objetivo ($)</div><input type="number" id="goal-target" placeholder="ej. 1500000" inputmode="decimal"></div></div>
+      <div class="frow"><div class="frow-ico">💵</div><div class="frow-body"><div class="frow-lbl">Ya tengo ahorrado ($)</div><input type="number" id="goal-saved" placeholder="0" inputmode="decimal"></div></div>
+      <div class="frow"><div class="frow-ico">📅</div><div class="frow-body"><div class="frow-lbl">Fecha objetivo</div><input type="date" id="goal-date"></div></div>
+    </div>
+    <button class="btn-primary" onclick="saveGoal()">Crear meta</button>
+  </div>
+</div>
+
+<!-- NEW RECURRING -->
+<div class="overlay" id="new-recurring-sheet" onclick="if(event.target===this)closeSheet('new-recurring-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title" id="rec-sheet-title">Nuevo gasto fijo</div>
+    <div class="fcard">
+      <div class="frow"><div class="frow-ico">✏️</div><div class="frow-body"><div class="frow-lbl">Descripción</div><input type="text" id="rec-desc" placeholder="ej. Netflix, Arriendo..."></div></div>
+      <div class="frow"><div class="frow-ico">💰</div><div class="frow-body"><div class="frow-lbl">Monto mensual ($)</div><input type="number" id="rec-amt" placeholder="ej. 45000" inputmode="decimal"></div></div>
+      <div class="frow"><div class="frow-ico">🏷️</div><div class="frow-body"><div class="frow-lbl">Categoría</div><select id="rec-cat"><option value="">Selecciona...</option></select></div></div>
+      <div class="frow"><div class="frow-ico">📅</div><div class="frow-body"><div class="frow-lbl">Día del mes</div>
+        <select id="rec-day" style="background:none;border:none;outline:none;color:var(--t1);font-family:var(--f);font-size:15px">
+          <option value="">Selecciona día...</option>
+        </select>
+      </div></div>
+      <div class="frow"><div class="frow-ico">👁️</div><div class="frow-body"><div class="frow-lbl">Visibilidad</div>
+        <select id="rec-visibility">
+          <option value="personal">Solo yo</option>
+          <option value="family">Familiar</option>
+        </select>
+      </div></div>
+    </div>
+    <button class="btn-primary" onclick="saveRecurring()">Guardar gasto fijo</button>
+    <button class="btn-danger" id="rec-delete-btn" style="display:none" onclick="deleteRecurring()">Eliminar gasto fijo</button>
+  </div>
+</div>
+
+<!-- INVITE FAMILY -->
+<div class="overlay" id="invite-sheet" onclick="if(event.target===this)closeSheet('invite-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title">Invitar a mi familia</div>
+    <div style="background:var(--s2);border-radius:var(--r);padding:14px 15px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:10px">Comparte este código con tu familia. Quien lo ingrese quedará conectado a tu hogar y podrán ver y registrar gastos familiares.</div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px;text-align:center">
+        <div id="family-code" style="font-family:var(--fd);font-size:28px;font-weight:800;letter-spacing:3px;color:var(--gold)">KASA-XXXX</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:5px">Código del hogar</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="copyFamilyCode()">Copiar código</button>
+    <div style="margin-top:14px">
+      <div class="frow-lbl" style="margin-bottom:7px">O unirme a otro hogar</div>
+      <div style="display:flex;gap:8px">
+        <input style="flex:1;background:var(--s2);border:1.5px solid var(--b1);color:var(--t1);border-radius:12px;padding:12px 14px;font-family:var(--f);font-size:15px;outline:none;transition:border-color .2s" placeholder="Código del hogar" id="join-code-input">
+        <button onclick="joinFamily()" style="background:var(--gold);border:none;border-radius:12px;padding:12px 16px;font-family:var(--fd);font-size:14px;font-weight:700;color:#09090b;cursor:pointer">Unirse</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAT SHEET (crear/editar) -->
+<div class="overlay" id="cat-sheet" onclick="if(event.target===this)closeSheet('cat-sheet')">
+  <div class="sheet-panel">
+    <div class="s-handle"></div>
+    <div class="s-title" id="cat-sheet-title">Nueva categoría</div>
+    <!-- preview -->
+    <div style="background:var(--s2);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;border:1px solid var(--b1)">
+      <div id="cat-prev-ico" style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:var(--goldbg)">✨</div>
+      <div><div id="cat-prev-name" style="font-size:15px;font-weight:600">Nueva categoría</div><div style="font-size:11px;color:var(--t3)">Vista previa</div></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="frow-lbl" style="margin-bottom:6px">Nombre</div>
+      <div style="position:relative">
+        <input class="afield input" type="text" id="cat-name-input"
+          placeholder="ej. Mascotas, Gym, Netflix..."
+          oninput="onCatNameInput()"
+          style="width:100%;background:var(--s2);border:1.5px solid var(--b1);color:var(--t1);border-radius:12px;padding:13px 50px 13px 15px;font-size:15px;outline:none;transition:all .22s;font-family:var(--f)"
+          maxlength="28">
+        <div id="auto-badge" onclick="toggleEmojiPicker()" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer;line-height:1">✨</div>
+      </div>
+      <div id="auto-hint" style="font-size:11px;color:var(--t3);margin-top:5px;min-height:15px;padding-left:2px">Escribe el nombre para detectar el emoji automáticamente</div>
+    </div>
+    <!-- emoji picker -->
+    <div id="emoji-picker-section" style="display:none;margin-bottom:12px">
+      <div class="frow-lbl" style="margin-bottom:7px">Personalizar emoji</div>
+      <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px" id="emoji-tab-row"></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:9px" id="emoji-grid-picker"></div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:11px;padding:10px 13px">
+        <div style="font-size:12px;color:var(--t2);flex:1">O escribe el tuyo:</div>
+        <input id="custom-emoji-input" placeholder="😀" maxlength="2"
+          style="width:44px;background:var(--s3);border:1.5px solid var(--b1);color:var(--t1);border-radius:9px;padding:8px;font-size:20px;text-align:center;outline:none;font-family:var(--f)"
+          oninput="onCustomEmojiInput(this)">
+      </div>
+    </div>
+    <!-- color -->
+    <div style="margin-bottom:16px">
+      <div class="frow-lbl" style="margin-bottom:8px">Color</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap" id="color-picker-grid"></div>
+    </div>
+    <button class="btn-primary" id="cat-save-btn" onclick="saveCategory()">Crear categoría</button>
+    <button class="btn-danger" id="cat-delete-btn" style="display:none" onclick="deleteCategoryManage()">Eliminar categoría</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
